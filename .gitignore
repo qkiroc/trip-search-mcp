@@ -1,0 +1,18 @@
+# 依赖
+node_modules
+package-lock.json
+
+apps
+
+# 构建文件
+dist
+
+# 环境变量
+.env
+
+# 日志
+*.log
+
+# IDE配置
+.vscode
+.idea
