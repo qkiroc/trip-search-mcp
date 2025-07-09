@@ -13,6 +13,8 @@ COPY package*.json ./
 # 只安装生产依赖
 RUN npm ci --only=production && npm cache clean --force
 
+RUN npx playwirght install
+
 # 复制预构建的dist目录和必要文件
 COPY dist ./dist
 COPY ecosystem.config.js ./ecosystem.config.js
