@@ -13,7 +13,24 @@ COPY package*.json ./
 # 只安装生产依赖
 RUN npm ci --only=production && npm cache clean --force
 
-RUN npx playwirght install
+RUN apt-get update && apt-get install -y \
+  libgbm-dev \
+  libnss3 \
+  libatk-bridge2.0-0 \
+  libatk1.0-0 \
+  libcups2 \
+  libx11-xcb1 \
+  libxcomposite1 \
+  libxdamage1 \
+  libxrandr2 \
+  libpangocairo-1.0-0 \
+  libdbus-1-3 \
+  libgdk-pixbuf2.0-0 \
+  libasound2 \
+  libnspr4 \
+  libxss1 \
+  libxtst6 && \
+  npx playwright install
 
 # 复制预构建的dist目录和必要文件
 COPY dist ./dist
