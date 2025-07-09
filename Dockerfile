@@ -23,15 +23,8 @@ RUN mkdir -p logs
 # 暴露端口
 EXPOSE 3000
 
-# 创建非root用户
-RUN addgroup -g 1001 -S nodejs && \
-    adduser -S nodejs -u 1001
-
 # 设置正确的权限
 RUN chown -R nodejs:nodejs /app
-
-# 切换到非root用户
-USER nodejs
 
 # 使用PM2启动应用
 CMD ["pm2-runtime", "start", "ecosystem.config.js"]
