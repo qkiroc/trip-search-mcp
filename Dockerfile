@@ -1,23 +1,4 @@
-# 多阶段构建，优化最终镜像大小
-# 第一阶段：构建阶段
-FROM node:20-alpine AS builder
-
-# 设置工作目录
-WORKDIR /app
-
-# 复制 package.json 和 package-lock.json
-COPY package*.json ./
-
-# 安装所有依赖（包括开发依赖）
-RUN npm ci
-
-# 复制源代码
-COPY . .
-
-# 构建应用
-RUN npm run build
-
-# 第二阶段：运行阶段
+# 优化的单阶段构建，使用预构建的文件
 FROM node:20-alpine AS runtime
 
 # 安装PM2全局
@@ -32,9 +13,9 @@ COPY package*.json ./
 # 只安装生产依赖
 RUN npm ci --only=production && npm cache clean --force
 
-# 从构建阶段复制构建结果和必要文件
-COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/ecosystem.config.js ./ecosystem.config.js
+# 复制预构建的dist目录和必要文件
+COPY dist ./dist
+COPY ecosystem.config.js ./ecosystem.config.js
 
 # 创建日志目录
 RUN mkdir -p logs
