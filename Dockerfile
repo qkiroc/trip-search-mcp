@@ -23,8 +23,5 @@ RUN mkdir -p logs
 # 暴露端口
 EXPOSE 3000
 
-# 设置正确的权限
-RUN chown -R nodejs:nodejs /app
-
 # 使用PM2启动应用
 CMD ["pm2-runtime", "start", "ecosystem.config.js"]
