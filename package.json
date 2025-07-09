@@ -9,6 +9,14 @@
     "mcp:client": "nodemon --exec ts-node -r reflect-metadata src/mcp/client.ts",
     "build": "tsc",
     "start": "node -r reflect-metadata dist/index.js",
+    "start:pm2": "pm2 start ecosystem.config.js",
+    "stop:pm2": "pm2 stop trip-search-mcp",
+    "restart:pm2": "pm2 restart trip-search-mcp",
+    "reload:pm2": "pm2 reload trip-search-mcp",
+    "delete:pm2": "pm2 delete trip-search-mcp",
+    "status:pm2": "pm2 status",
+    "logs:pm2": "pm2 logs trip-search-mcp",
+    "monit:pm2": "pm2 monit",
     "test": "jest"
   },
   "dependencies": {
@@ -22,6 +30,7 @@
     "koa-bodyparser": "^4.4.1",
     "koa-router": "^12.0.0",
     "playwright": "^1.53.2",
+    "pm2": "^5.4.2",
     "reflect-metadata": "^0.1.13",
     "zod": "^3.25.67"
   },

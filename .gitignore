@@ -12,6 +12,14 @@ dist
 
 # 日志
 *.log
+logs/*.log
+logs/combined.log
+logs/out.log
+logs/error.log
+!logs/.gitkeep
+
+# PM2
+.pm2
 
 # IDE配置
 .vscode
