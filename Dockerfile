@@ -1,5 +1,5 @@
 # 优化的单阶段构建，使用预构建的文件
-FROM node:20-alpine AS runtime
+FROM mcr.microsoft.com/playwright:v1.43.1-jammy
 
 # 安装PM2全局
 RUN npm install -g pm2
@@ -12,24 +12,6 @@ COPY package*.json ./
 
 # 只安装生产依赖
 RUN npm ci --only=production && npm cache clean --force
-
-RUN apk update && apk add --no-cache \
-  libgbm \
-  nss \
-  atk \
-  cups \
-  x11-libs \
-  xcomposite \
-  xdamage \
-  xrandr \
-  cairo \
-  dbus \
-  gdk-pixbuf \
-  alsa-lib \
-  nspr \
-  libxss \
-  libxtst && \
-  npx playwright install
 
 # 复制预构建的dist目录和必要文件
 COPY dist ./dist
