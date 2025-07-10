@@ -29,7 +29,7 @@ export async function getFlightInfoByCtrip({
   depCity = await getCityCode(depCity);
   arrCity = await getCityCode(arrCity);
 
-  const browser = await chromium.launch({headless: false});
+  const browser = await chromium.launch({headless: true});
   const page = await browser.newPage();
   const url = `https://flights.ctrip.com/online/list/oneway-${depCity}-${arrCity}?_=1&depdate=${depDate}&cabin=Y_S_C_F`;
 
