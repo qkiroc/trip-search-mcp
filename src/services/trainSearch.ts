@@ -1,4 +1,6 @@
 import {chromium} from 'playwright';
+import server from './mcpServer';
+import z from 'zod';
 
 interface TrainInfo {
   train: string; // 车次
@@ -142,3 +144,34 @@ export async function getTrainInfoBy12306({
     url: url
   };
 }
+
+server.addTool({
+  name: 'getTrainInfo',
+  description: '通过12306查询高铁信息',
+  parameters: z.object({
+    depStation: z.string().describe('出发城市或车站'),
+    arrStation: z.string().describe('到达城市或车站'),
+    depDate: z.string().describe('出发日期，格式为YYYY-MM-DD')
+  }),
+  execute: async ({depStation, arrStation, depDate}) => {
+    const {trainInfo, url} = await getTrainInfoBy12306({
+      depStation,
+      arrStation,
+      depDate
+    });
+    return `查询到的高铁信息：
+| 车次 | 出发站 | 到达站 | 出发时间 | 到达时间 | 历时 | 商务座特等坐 | 优选一等座 | 一等座 | 二等座二等包座 | 高级软卧 | 软卧/动卧一等卧 | 硬卧二等卧 | 软座 | 硬座 | 无座 | 其他 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+${trainInfo
+  .map(
+    train =>
+      `| ${train.train} | ${train.startStation} | ${train.endStation} | ${
+        train.startTime
+      } | ${train.endTime} | ${train.duration} | ${train.priceInfo
+        .map(n => (n.price ? `${n.price}，余票${n.ticketLeft}` : '-'))
+        .join(' | ')} |`
+  )
+  .join('\n')}
+> 数据来源：[12306](${url})`;
+  }
+});

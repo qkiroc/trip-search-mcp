@@ -1,5 +1,7 @@
 import {chromium} from 'playwright';
 import {scrollToLoadAllContent} from './helper';
+import z from 'zod';
+import server from './mcpServer';
 
 /**
  * 通过携程查询航班信息
@@ -106,3 +108,37 @@ export async function getCityCode(cityName: string) {
   const code = data?.Data?.[0]?.Code;
   return code || '';
 }
+
+server.addTool({
+  name: 'getFlightInfo',
+  description: '通过携程查询航班信息',
+  parameters: z.object({
+    from: z.string().describe('出发城市'),
+    to: z.string().describe('到达城市'),
+    date: z.string().describe('出发日期，格式为YYYY-MM-DD')
+  }),
+  execute: async ({from, to, date}) => {
+    const {flightInfo, url} = await getFlightInfoByCtrip({
+      depCity: from,
+      arrCity: to,
+      depDate: date
+    });
+    return `查询到的航班信息：
+    | 航空公司 | 航班号 | 出发时间 | 出发机场 | 到达时间 | 到达机场 | 中转 | 经停/中转/通程 | 价格 |
+    | --- | --- | --- | --- | --- | --- | --- | --- |
+    ${flightInfo
+      .map(
+        flight =>
+          `| ${flight.airlineName} | ${flight.planeNo} | ${
+            flight.departTime
+          } | ${flight.departAirport} | ${flight.arriveTime} | ${
+            flight.arriveAirport
+          } | ${flight.isTransfer ? '是' : '否'} | ${
+            flight.transfer || '-'
+          } | ${flight.price} |`
+      )
+      .join('\n')}
+    > 数据来源：[携程](${url})
+    `;
+  }
+});
