@@ -17,7 +17,7 @@ mcpServer.tool(
     date: z.string().describe('出发日期，格式为YYYY-MM-DD')
   },
   async ({from, to, date}) => {
-    const flightInfo = await getFlightInfoByCtrip({
+    const {flightInfo, url} = await getFlightInfoByCtrip({
       depCity: from,
       arrCity: to,
       depDate: date
@@ -26,16 +26,21 @@ mcpServer.tool(
       content: [
         {
           type: 'text',
-          text: `# 参数说明：\n
-* airlineName: 航空公司名称\n
-* planeNo: 航班号\n
-* departTime: 出发时间\n
-* departAirport: 出发机场\n
-* arriveTime: 到达时间\n
-* arriveAirport: 到达机场\n
-* transfer: 是否中转，true为中转航班\n
-* price: 价格\n
-# 查询到的航班信息：\n${JSON.stringify(flightInfo, null, 2)}`
+          text: `查询到的航班信息：
+| 航空公司 | 航班号 | 出发时间 | 出发机场 | 到达时间 | 到达机场 | 中转 | 经停/中转/通程 | 价格 |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+${flightInfo
+  .map(
+    flight =>
+      `| ${flight.airlineName} | ${flight.planeNo} | ${flight.departTime} | ${
+        flight.departAirport
+      } | ${flight.arriveTime} | ${flight.arriveAirport} | ${
+        flight.isTransfer ? '是' : '否'
+      } | ${flight.transfer || '-'} | ${flight.price} |`
+  )
+  .join('\n')}
+> 数据来源：[携程](${url})
+`
         }
       ]
     };
