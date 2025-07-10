@@ -1,4 +1,5 @@
-import {chromium, Page} from 'playwright';
+import {chromium} from 'playwright';
+import {scrollToLoadAllContent} from './helper';
 
 /**
  * 通过携程查询航班信息
@@ -30,7 +31,7 @@ export async function getFlightInfoByCtrip({
 
   const browser = await chromium.launch({headless: false});
   const page = await browser.newPage();
-  const url = `https://flights.ctrip.com/online/list/oneway-${depCity}-${arrCity}?_=1&depdate${depDate}&cabin=Y_S_C_F`;
+  const url = `https://flights.ctrip.com/online/list/oneway-${depCity}-${arrCity}?_=1&depdate=${depDate}&cabin=Y_S_C_F`;
 
   await page.goto(url);
 
@@ -41,37 +42,47 @@ export async function getFlightInfoByCtrip({
     return flightElements.map(flight => {
       const flightInfo = {
         airlineName:
-          (
-            flight.querySelector('.airline-name') as HTMLDivElement
-          )?.innerText?.trim() || '',
+          (flight.querySelector('.airline-name') as HTMLDivElement)?.innerText
+            ?.trim()
+            .replace(/\n/g, ',') || '',
         planeNo:
-          (
-            flight.querySelector('.plane-No') as HTMLDivElement
-          )?.innerText?.trim() || '',
+          (flight.querySelector('.plane-No') as HTMLDivElement)?.innerText
+            ?.trim()
+            .replace(/\n/g, ',') || '',
         departTime:
           (
             flight.querySelector('.depart-box .time') as HTMLDivElement
-          )?.innerText?.trim() || '',
+          )?.innerText
+            ?.trim()
+            .replace(/\n/g, ',') || '',
         departAirport:
           (
             flight.querySelector('.depart-box .airport') as HTMLDivElement
-          )?.innerText?.trim() || '',
+          )?.innerText
+            ?.trim()
+            .replace(/\n/g, ',') || '',
         arriveTime:
           (
             flight.querySelector('.arrive-box .time') as HTMLDivElement
-          )?.innerText?.trim() || '',
+          )?.innerText
+            ?.trim()
+            .replace(/\n/g, ',') || '',
         arriveAirport:
           (
             flight.querySelector('.arrive-box .airport') as HTMLDivElement
-          )?.innerText?.trim() || '',
+          )?.innerText
+            ?.trim()
+            .replace(/\n/g, ',') || '',
         transfer:
-          (
-            flight.querySelector('.arrow-box') as HTMLDivElement
-          )?.innerText?.trim() || '',
+          (flight.querySelector('.arrow-box') as HTMLDivElement)?.innerText
+            ?.trim()
+            .replace(/\n/g, ',') || '',
         price:
           (
             flight.querySelector('.flight-price .price') as HTMLDivElement
-          )?.innerText?.trim() || '',
+          )?.innerText
+            ?.trim()
+            .replace(/\n/g, ',') || '',
         isTransfer: !!flight.querySelector('.arrow-transfer')
       };
       return flightInfo;
@@ -94,48 +105,4 @@ export async function getCityCode(cityName: string) {
   const data = await res.json();
   const code = data?.Data?.[0]?.Code;
   return code || '';
-}
-
-/**
- * 滚动页面直到所有内容加载完成
- * @param page Playwright页面对象
- * @param maxScrollAttempts 最大滚动次数，默认30次
- * @param scrollStep 每次滚动的像素数，默认600px
- * @param waitTime 每次滚动后的等待时间，默认1000ms
- * @param unchangedThreshold 连续多少次页面高度不变认为加载完成，默认3次
- */
-async function scrollToLoadAllContent(
-  page: Page,
-  maxScrollAttempts: number = 30,
-  scrollStep: number = 600,
-  waitTime: number = 1000,
-  unchangedThreshold: number = 3
-): Promise<void> {
-  let oldScrollHeight = await page.evaluate(() => {
-    return document.body.scrollHeight;
-  });
-  let scrollHeight = scrollStep;
-  let unchangedCount = 0;
-
-  for (let i = 0; i < maxScrollAttempts; i++) {
-    await page.evaluate(scrollHeight => {
-      window.scrollTo(0, scrollHeight);
-    }, scrollHeight);
-    scrollHeight += scrollStep;
-
-    // 等待页面加载
-    await page.waitForTimeout(waitTime);
-
-    const newScrollHeight = await page.evaluate(() => {
-      return document.body.scrollHeight;
-    });
-
-    unchangedCount =
-      newScrollHeight === oldScrollHeight ? unchangedCount + 1 : 0;
-    oldScrollHeight = newScrollHeight;
-
-    if (unchangedCount >= unchangedThreshold) {
-      break; // 如果连续指定次数没有变化，认为加载完成
-    }
-  }
 }
