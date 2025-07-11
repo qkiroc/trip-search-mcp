@@ -1,5 +1,5 @@
 # 优化的单阶段构建，使用预构建的文件
-FROM mcr.microsoft.com/playwright:v1.53.2-jammy
+FROM mcr.microsoft.com/playwright:v1.54.0-jammy
 
 # 安装PM2全局
 RUN npm install -g pm2
