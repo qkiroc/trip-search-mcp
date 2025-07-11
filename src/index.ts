@@ -1,28 +1,15 @@
 import dotenv from 'dotenv';
 dotenv.config();
-import Koa from 'koa';
-import {createServer} from 'http';
-import router from './routes';
-import {errorHandler} from './middleware/errorHandler';
-import {logger} from './middleware/logger';
+import server from './services/mcpServer';
+import './services/flightSearch';
+import './services/trainSearch';
 
-const app = new Koa();
+async function startServer() {
+  await server.start({
+    transportType: 'httpStream',
+    httpStream: {port: 3000}
+  });
+  console.log(`Server is running at http://localhost:3000`);
+}
 
-// 使用 bodyParser 会提前消耗请求体，导致后续的 SSE 连接无法正常工作
-// 这里注释掉 bodyParser 的使用，SSE 连接会直接处理请求
-// app.use(
-//   bodyParser({
-//     enableTypes: ['json', 'form', 'text']
-//   })
-// );
-
-app.use(router.routes()).use(router.allowedMethods());
-app.use(errorHandler);
-app.use(logger);
-
-// 创建HTTP服务器
-const server = createServer(app.callback());
-
-const PORT = process.env.PORT || 3000;
-server.listen(PORT);
-console.log(`🚀 Server is running on http://localhost:${PORT}`);
+startServer();
