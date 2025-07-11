@@ -200,25 +200,41 @@ export async function getFlightInfoByFliggy({
 }
 
 export async function getCityCodeByQunar({
-  depCity,
   depCityName,
-  arrCity,
   arrCityName,
   depDate
 }: FlightProps & {
   depCityName: string;
   arrCityName: string;
 }) {
-  const url = `https://flight.qunar.com/site/oneway_list.htm?searchDepartureAirport=${depCityName}&searchArrivalAirport=${arrCityName}&searchDepartureTime=${depDate}&fromCode=${depCity}&toCode=${arrCity}`;
+  const url = `https://flight.qunar.com/site/oneway_list.htm`;
   const browser = await chromium.launch({headless: false});
-  const page = await browser.newPage();
+  const context = await browser.newContext();
+  await context.addInitScript(() => {
+    // 禁用webdriver检测
+    // 让浏览器看起来像是正常用户操作的
+    Object.defineProperty(navigator, 'webdriver', {get: () => false});
+  });
+  const page = await context.newPage();
   await page.goto(url);
+
+  const inputs = await page.$$('.serTxt');
+
+  await inputs[0].fill(depCityName);
+  await page.waitForTimeout(1000); // 等待1秒，确保输入框有时间加载
+  await inputs[0].press('Enter');
+  await inputs[1].fill(arrCityName);
+  await page.waitForTimeout(1000); // 等待1秒，确保输入框有时间加载
+  await inputs[1].press('Enter');
+  await inputs[2].fill(depDate);
+  await inputs[3].press('Enter');
+
   let nodes: FlightInfo[] = [];
   while (true) {
     await page.waitForSelector('.m-airfly-lst');
 
     const list = await page.$$eval(
-      '.m-airfly-lst .m-airfly-item',
+      '.m-airfly-lst .b-airfly',
       flightElements => {
         return flightElements.map(flight => {
           const airlineName = Array.from(flight.querySelectorAll('.air'))
@@ -236,7 +252,7 @@ export async function getCityCodeByQunar({
               )?.innerText?.trim() || '',
             departAirport:
               (
-                flight.querySelector('.sep-lf airport') as HTMLDivElement
+                flight.querySelector('.sep-lf .airport') as HTMLDivElement
               )?.innerText?.trim() || '',
             arriveTime:
               (
@@ -249,18 +265,19 @@ export async function getCityCodeByQunar({
               '',
             arriveAirport:
               (
-                flight.querySelector('.sep-rt airport') as HTMLDivElement
+                flight.querySelector('.sep-rt .airport') as HTMLDivElement
               )?.innerText?.trim() || '',
             transfer:
-              (
-                flight.querySelector('.trans') as HTMLDivElement
-              )?.innerText?.trim() || '',
+              (flight.querySelector('.trans') as HTMLDivElement)?.innerText
+                ?.trim()
+                .replace(/\n/, ',') || '',
             price:
               (
-                flight.querySelector('.col-price') as HTMLDivElement
-              )?.innerText?.trim() || '',
+                flight.querySelector('.fix_price') as HTMLDivElement
+              )?.getAttribute('title') || '',
             isTransfer: false
           };
+
           return flightInfo;
         });
       }
@@ -273,6 +290,8 @@ export async function getCityCodeByQunar({
     if (nextPageButtonDisabled?.includes('page-link-disabled')) {
       break;
     }
+    // 点击下一页
+    await nextPageButton.click();
   }
   await browser.close();
   return {flightInfo: nodes, url};
@@ -331,10 +350,18 @@ server.addTool({
     };
     const [
       {flightInfo: flightInfoByCtrip, url: urlCtrip},
-      {flightInfo: flightInfoByFliggy, url: urlFliggy}
+      {flightInfo: flightInfoByFliggy, url: urlFliggy},
+      {flightInfo: flightInfoByQunar, url: urlQunar}
     ] = await Promise.all([
       getFlightInfoByCtrip(data),
-      getFlightInfoByFliggy(data)
+      getFlightInfoByFliggy(data),
+      getCityCodeByQunar({
+        depCityName: from,
+        depCity,
+        arrCity,
+        arrCityName: to,
+        depDate: date
+      })
     ]);
 
     return `查询到的航班信息：
@@ -343,6 +370,9 @@ ${flightInfo2Markdown(flightInfoByCtrip)}
 
 ${flightInfo2Markdown(flightInfoByFliggy)}
 > 数据来源：[飞猪](${urlFliggy})
+
+${flightInfo2Markdown(flightInfoByQunar)}
+> 数据来源：[去哪儿](${urlQunar})
 `;
   }
 });
