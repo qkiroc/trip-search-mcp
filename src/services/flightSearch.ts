@@ -199,6 +199,85 @@ export async function getFlightInfoByFliggy({
   };
 }
 
+export async function getCityCodeByQunar({
+  depCity,
+  depCityName,
+  arrCity,
+  arrCityName,
+  depDate
+}: FlightProps & {
+  depCityName: string;
+  arrCityName: string;
+}) {
+  const url = `https://flight.qunar.com/site/oneway_list.htm?searchDepartureAirport=${depCityName}&searchArrivalAirport=${arrCityName}&searchDepartureTime=${depDate}&fromCode=${depCity}&toCode=${arrCity}`;
+  const browser = await chromium.launch({headless: false});
+  const page = await browser.newPage();
+  await page.goto(url);
+  let nodes: FlightInfo[] = [];
+  while (true) {
+    await page.waitForSelector('.m-airfly-lst');
+
+    const list = await page.$$eval(
+      '.m-airfly-lst .m-airfly-item',
+      flightElements => {
+        return flightElements.map(flight => {
+          const airlineName = Array.from(flight.querySelectorAll('.air'))
+            .map(el => (el as HTMLDivElement).innerText?.trim() || '')
+            .join(',');
+          const planeNo = Array.from(flight.querySelectorAll('.num'))
+            .map(el => (el as HTMLDivElement).innerText?.trim() || '')
+            .join(',');
+          const flightInfo = {
+            airlineName: airlineName,
+            planeNo: planeNo,
+            departTime:
+              (
+                flight.querySelector('.sep-lf h2') as HTMLDivElement
+              )?.innerText?.trim() || '',
+            departAirport:
+              (
+                flight.querySelector('.sep-lf airport') as HTMLDivElement
+              )?.innerText?.trim() || '',
+            arriveTime:
+              (
+                flight.querySelector('.sep-rt h2') as HTMLDivElement
+              )?.innerText?.trim() ||
+              '' +
+                (
+                  flight.querySelector('.daycross') as HTMLDivElement
+                )?.innerText?.trim() ||
+              '',
+            arriveAirport:
+              (
+                flight.querySelector('.sep-rt airport') as HTMLDivElement
+              )?.innerText?.trim() || '',
+            transfer:
+              (
+                flight.querySelector('.trans') as HTMLDivElement
+              )?.innerText?.trim() || '',
+            price:
+              (
+                flight.querySelector('.col-price') as HTMLDivElement
+              )?.innerText?.trim() || '',
+            isTransfer: false
+          };
+          return flightInfo;
+        });
+      }
+    );
+    nodes.push(...list);
+    await page.waitForTimeout(1000); // 等待1秒，不然太假了
+    const nextPageButton = await page.getByText('下一页');
+    const nextPageButtonDisabled = await nextPageButton.getAttribute('class');
+    // 如果没有下一页，直接返回结果
+    if (nextPageButtonDisabled?.includes('page-link-disabled')) {
+      break;
+    }
+  }
+  await browser.close();
+  return {flightInfo: nodes, url};
+}
+
 export async function getCityCode(cityName: string) {
   const res = await fetch(
     `https://flights.ctrip.com/international/search/api/poi/search?key=${cityName}&filterAirport=true`
