@@ -4,7 +4,8 @@
   "description": "Trip Search Model Context Protocol (MCP) Server",
   "main": "dist/index.js",
   "scripts": {
-    "dev": "nodemon --exec tsx src/index.ts & DANGEROUSLY_OMIT_AUTH=true npx fastmcp inspect server.ts",
+    "dev": "DANGEROUSLY_OMIT_AUTH=true MCP_SERVER_REQUEST_TIMEOUT=1000000 npx fastmcp inspect src/index.ts",
+    "dev-mcp": "nodemon --exec tsx src/index.ts",
     "build": "tsc",
     "test": "jest"
   },
