@@ -42,9 +42,6 @@ module.exports = {
       kill_timeout: 5000,
       restart_delay: 4000,
 
-      // Node.js 特定配置
-      node_args: ['-r', 'reflect-metadata'],
-
       // 忽略监听文件变化
       ignore_watch: ['node_modules', 'logs', '.git', 'dist'],
 
