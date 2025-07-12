@@ -337,7 +337,7 @@ function flightInfo2Markdown(flightInfo: FlightInfo[]) {
 
 server.addTool({
   name: 'getFlightInfo',
-  description: '查询航班信息，支持携程和飞猪',
+  description: '查询航班信息，支持携程、飞猪、去哪儿',
   parameters: z.object({
     from: z.string().describe('出发城市'),
     to: z.string().describe('到达城市'),
