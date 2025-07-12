@@ -41,7 +41,9 @@ export async function getFlightInfoByCtrip({
   arrCity,
   depDate
 }: FlightProps) {
-  const browser = await chromium.launch({headless: true});
+  const browser = await chromium.launch({
+    headless: process.env.CHROMIUN_HEADLESS !== 'false'
+  });
   const page = await browser.newPage();
   const url = `https://flights.ctrip.com/online/list/oneway-${depCity}-${arrCity}?_=1&depdate=${depDate}&cabin=Y_S_C_F`;
 
@@ -130,7 +132,9 @@ export async function getFlightInfoByFliggy({
   arrCity,
   depDate
 }: FlightProps) {
-  const browser = await chromium.launch({headless: true});
+  const browser = await chromium.launch({
+    headless: process.env.CHROMIUN_HEADLESS !== 'false'
+  });
   const page = await browser.newPage();
   const url = `https://sjipiao.fliggy.com/flight_search_result.htm?depCity=${depCity}&arrCity=${arrCity}&depDate=${depDate}`;
   await page.goto(url);
@@ -208,7 +212,9 @@ export async function getCityCodeByQunar({
   arrCityName: string;
 }) {
   const url = `https://flight.qunar.com/site/oneway_list.htm`;
-  const browser = await chromium.launch({headless: false});
+  const browser = await chromium.launch({
+    headless: process.env.CHROMIUN_HEADLESS !== 'false'
+  });
   const context = await browser.newContext();
   await context.addInitScript(() => {
     // 禁用webdriver检测
